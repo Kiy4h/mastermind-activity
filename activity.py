@@ -26,6 +26,7 @@ from constants import BallType
 from helpbutton import HelpButton
 
 import gi
+import json
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
@@ -33,16 +34,15 @@ from gi.repository import Pango
 
 from sugar3.graphics.toolbutton import ToolButton
 from sugar3.graphics.toolbarbox import ToolbarBox
-
-from sugar3.activity.widgets import ActivityToolbarButton
 from sugar3.activity.widgets import StopButton
-from sugar3.activity import activity
+
+from sugarapp.widgets import SugarCompatibleActivity
+from sugarapp.widgets import ExtendedActivityToolbarButton
 
 
-class Mastermind(activity.Activity):
-
+class Mastermind(SugarCompatibleActivity):
     def __init__(self, handle):
-        activity.Activity.__init__(self, handle)
+        SugarCompatibleActivity.__init__(self, handle)
 
         self.canvas = Canvas()
         self.canvas.connect("data-changed", self._data_changed_cb)
@@ -66,7 +66,7 @@ class Mastermind(activity.Activity):
         self.set_toolbar_box(toolbarbox)
 
         toolbar = toolbarbox.toolbar
-        toolbar.insert(ActivityToolbarButton(self), -1)
+        toolbar.insert(ExtendedActivityToolbarButton(self), -1)
         toolbar.insert(make_separator(False), -1)
 
         self.restart_button = ToolButton(icon_name="system-restart")
@@ -107,14 +107,18 @@ class Mastermind(activity.Activity):
         toolbar.show_all()
 
     def read_file(self):
-        if "level" in list(self.metadata.keys()):
+        with open(file_path, 'r') as save_file:
+            data = save_file.read()
+            metadata = json.loads(data)
+
+        if "level" in list(metadata.keys()):
             data = {
-                "level": int(self.metadata["level"]),
-                "correct": [int(x) for x in eval(self.metadata["correct"])],
+                "level": int(metadata["level"]),
+                "correct": [int(x) for x in eval(metadata["correct"])],
                 "balls": {}
             }
 
-            balls = eval(self.metadata["balls"])
+            balls = eval(metadata["balls"])
             for key in balls:
                 x = int(key)
                 data["balls"][x] = []
@@ -132,9 +136,12 @@ class Mastermind(activity.Activity):
 
     def write_file(self, path):
         data = self.canvas.get_game_data()
-        self.metadata["level"] = data["level"]
-        self.metadata["correct"] = data["correct"]
-        self.metadata["balls"] = data["balls"]
+        metadata = {}
+        metadata["level"] = data["level"]
+        metadata["correct"] = data["correct"]
+        metadata["balls"] = data["balls"]
+        with open(file_path, 'w') as save_file:
+            save_file.write(json.dumps(metadata))
 
     def _ok_cb(self, button):
         self.canvas.end_turn()
