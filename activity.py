@@ -51,7 +51,6 @@ class Mastermind(SugarCompatibleActivity):
         self.set_canvas(self.canvas)
 
         self.make_toolbar()
-        self.read_file()
 
         self.show_all()
 
@@ -106,8 +105,8 @@ class Mastermind(SugarCompatibleActivity):
 
         toolbar.show_all()
 
-    def read_file(self):
-        with open(file_path, 'r') as save_file:
+    def read_file(self, path):
+        with open(path, 'r') as save_file:
             data = save_file.read()
             metadata = json.loads(data)
 
@@ -140,7 +139,7 @@ class Mastermind(SugarCompatibleActivity):
         metadata["level"] = data["level"]
         metadata["correct"] = data["correct"]
         metadata["balls"] = data["balls"]
-        with open(file_path, 'w') as save_file:
+        with open(path, 'w') as save_file:
             save_file.write(json.dumps(metadata))
 
     def _ok_cb(self, button):
